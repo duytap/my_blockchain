@@ -44,8 +44,9 @@ public:
 
         return fina_hash.str();
     }
-    bool mine_block() {
+    bool mine_block(string prev) {
         curr_hash = calc_hash();
+        prev_hash = prev;
         while (curr_hash.substr(0, diff.size()) != diff) {
             ++nonce;
             curr_hash = calc_hash();
@@ -84,10 +85,11 @@ public:
     bool createGenesisBlock()
     {
         chain.emplace_back(0, "Genesis Block", "", "The Beginning", "0f0c", time(nullptr), 0);
-        chain[0].mine_block();
+        chain[0].mine_block("Genesis Block");
         return true;
     }
-    bool newBlock(string curr, string d, string difficuty, time_t timestamp, long long numberUsedOnce) {
+    bool newBlock(string curr, string d, time_t timestamp, long long numberUsedOnce) {
+        string difficuty = "0f0c";
         chain.emplace_back(chain.size(), chain[chain.size() - 1].get_curr_hash(), curr, d, difficuty, timestamp, numberUsedOnce);
         return true;
     }
@@ -103,6 +105,7 @@ public:
     }
     bool coutAll() {
         for (int i = 0; i < chain.size(); ++i) {
+            cout << "-----" << '\n';
             cout << "index: " << chain[i].get_ind() << '\n';
             cout << "prev: " << chain[i].get_prev_hash() << '\n';
             cout << "curr: " << chain[i].get_curr_hash() << '\n';
@@ -111,12 +114,13 @@ public:
             time_t timed = chain[i].get_time();
             cout << "time: " << timed << " " << ctime(&timed);
             cout << "nonce: " << chain[i].get_nonce() << '\n';
+            cout << "-----" << '\n';
         }
         return true;
     }
     bool mine(int i = -1) {
         if (i < 0) i = chain.size() - 1;
-        chain[i].mine_block();
+        chain[i].mine_block(chain[i - 1].calc_hash());
         return true;
     }
 };
@@ -131,23 +135,29 @@ int main()
     if (blockFile.is_open() == false) {
         system("touch blocks.json");
     }
-        chainLeader.createGenesisBlock();
+    chainLeader.createGenesisBlock();
     // json blockJSon = json::parse(blockFile);
     string inp;
     while (inp != "out") {
-        cout << "comm&>>";
+        cout << "comm&>> ";
         cin >> inp;
         if (inp == "new") {
             cout << "data: ";
             string data;
             cin >> data;
-            cout << "diff: ";
-            string diff;
-            cin >> diff;
-            chainLeader.newBlock("", data, diff, time(nullptr), 0);
+            chainLeader.newBlock("", data, time(nullptr), 0);
         }
         if (inp == "ls") chainLeader.coutAll();
-        if (inp == "mine") chainLeader.mine();
+        if (inp == "mine") {
+            int i;
+            cout << "Block index [-1 for default]: ";
+            cin >> i;
+            chainLeader.mine(i);
+        }
+        if (inp == "valida") {
+            if (chainLeader.validatchain()) cout << "Chain is valid..." << '\n';
+            else cout << "Chain is invalid!" << '\n';
+        }
     }
     
     return 0;
