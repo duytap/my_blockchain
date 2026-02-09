@@ -9,15 +9,15 @@
 #include "json.hpp"
 
 using namespace std;
-using json = nlohmann::json;
+using json = nlohmann::json; 
 
 
-class Block
+class Block 
 {
 private:
-    int index;
-    long long nonce;
-    time_t timest;
+    int index; 
+    long long nonce; 
+    time_t timest; 
     string diff;
     string prev_hash, curr_hash, data;
 public:
@@ -47,6 +47,7 @@ public:
     bool mine_block(string prev) {
         curr_hash = calc_hash();
         prev_hash = prev;
+        timest = time(nullptr);
         while (curr_hash.substr(0, diff.size()) != diff) {
             ++nonce;
             curr_hash = calc_hash();
@@ -119,7 +120,17 @@ public:
         return true;
     }
     bool mine(int i = -1) {
-        if (i < 0) i = chain.size() - 1;
+        if (i < 1) {
+            i = chain.size() - 1;
+            if (i == 0) {
+                cout << "What do you mean by mining genesis blocks again?" << '\n';
+                return false;
+            }
+        }
+        if (i >= chain.size()) {
+            cout << "What do you mean by mining a block that doesn't exist?\n";
+            return false;
+        }
         chain[i].mine_block(chain[i - 1].calc_hash());
         return true;
     }
@@ -145,6 +156,7 @@ int main()
             cout << "data: ";
             string data;
             cin >> data;
+            cout << "\n";
             chainLeader.newBlock("", data, time(nullptr), 0);
         }
         if (inp == "ls") chainLeader.coutAll();
@@ -152,6 +164,7 @@ int main()
             int i;
             cout << "Block index [-1 for default]: ";
             cin >> i;
+            cout << '\n';
             chainLeader.mine(i);
         }
         if (inp == "valida") {

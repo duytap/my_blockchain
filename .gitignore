@@ -11,4 +11,4 @@ nhap/
 .ccls*
 .cache
 blocks.json
-my_blockchain
+blockchain_core
