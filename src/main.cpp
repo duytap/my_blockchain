@@ -92,6 +92,8 @@ public:
         return true;
     }
     bool validatchain() {
+        if (chain[0].get_curr_hash() != chain[0].calc_hash()) return false;
+        if (chain[0].get_diff() != "0f0c") return false;
         for (int i = 1; i < chain.size(); ++i) {
             if (chain[i].get_prev_hash() != chain[i - 1].get_curr_hash()) return false;
             if (chain[i].get_curr_hash() != chain[i].calc_hash()) return false;
