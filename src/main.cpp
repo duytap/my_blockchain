@@ -84,6 +84,7 @@ public:
     bool createGenesisBlock()
     {
         chain.emplace_back(0, "Genesis Block", "", "The Beginning", "0f0c", time(nullptr), 0);
+        chain[0].mine_block();
         return true;
     }
     bool newBlock(string curr, string d, string difficuty, time_t timestamp, long long numberUsedOnce) {
@@ -93,6 +94,8 @@ public:
     bool validatchain() {
         for (int i = 1; i < chain.size(); ++i) {
             if (chain[i].get_prev_hash() != chain[i - 1].get_curr_hash()) return false;
+            if (chain[i].get_curr_hash() != chain[i].calc_hash()) return false;
+            if (chain[i].get_curr_hash().substr(0, chain[i].get_diff().size()) != chain[i].get_diff()) return false;
         }
         return true;
     }
@@ -103,8 +106,8 @@ public:
             cout << "curr: " << chain[i].get_curr_hash() << '\n';
             cout << "data: " << chain[i].get_data() << '\n';
             cout << "diff: " << chain[i].get_diff() << '\n';
-            time_t timed = time(nullptr);
-            cout << "time: " << chain[i].get_time() << " " << ctime(&timed);
+            time_t timed = chain[i].get_time();
+            cout << "time: " << timed << " " << ctime(&timed);
             cout << "nonce: " << chain[i].get_nonce() << '\n';
         }
         return true;
@@ -139,7 +142,7 @@ int main()
             cout << "diff: ";
             string diff;
             cin >> diff;
-            chainLeader.newBlock(" ", data, diff, time(nullptr), 0);
+            chainLeader.newBlock("", data, diff, time(nullptr), 0);
         }
         if (inp == "ls") chainLeader.coutAll();
         if (inp == "mine") chainLeader.mine();
