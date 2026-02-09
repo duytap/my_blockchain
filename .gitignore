@@ -1,0 +1,14 @@
+CMakeCache.txt
+CMakeFiles/
+*.o
+*.exe
+build/
+compile_commands.json
+.vscode
+cmake_install.cmake
+Makefile
+nhap/
+.ccls*
+.cache
+blocks.json
+my_blockchain
