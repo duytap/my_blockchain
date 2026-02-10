@@ -21,12 +21,12 @@ private:
     string diff;
     string prev_hash, curr_hash, data;
 public:
-    Block(int ind, string prev, string curr, string d, string difficuty, time_t timestamp, long long numberUsedOnce)
+    Block(int ind, string prev_hs, string curr_hs, string d, string difficuty, time_t timestamp, long long numberUsedOnce)
     {
         index = ind;
-        prev_hash = prev;
+        prev_hash = prev_hs;
         data =  d;
-        curr_hash = curr;
+        curr_hash = curr_hs;
         diff = difficuty;
         timest = timestamp;
         nonce = numberUsedOnce;
@@ -89,9 +89,9 @@ public:
         chain[0].mine_block("Genesis Block");
         return true;
     }
-    bool newBlock(string curr, string d, time_t timestamp, long long numberUsedOnce) {
-        string difficuty = "0f0c";
-        chain.emplace_back(chain.size(), chain[chain.size() - 1].get_curr_hash(), curr, d, difficuty, timestamp, numberUsedOnce);
+    bool newBlock(string d, time_t timestamp = time(nullptr), string prev_hs = "", string curr = "", long long numberUsedOnce = 0, string diff = "default") {
+        if (diff == "default") diff = "0f0c";
+        chain.emplace_back(chain.size(), prev_hs, curr, d, diff, timestamp, numberUsedOnce);
         return true;
     }
     bool validatchain() {
@@ -119,6 +119,17 @@ public:
         }
         return true;
     }
+    bool addblocktojson(json& blockJSon, int i = -1) {
+        if (i < 0) i = blockJSon["chain"].size();
+        blockJSon["chain"][i]["index"] = i;
+        blockJSon["chain"][i]["data"] = chain[i].get_data();
+        blockJSon["chain"][i]["time"] = chain[i].get_time();
+        blockJSon["chain"][i]["prev_hash"] = chain[i].get_prev_hash();
+        blockJSon["chain"][i]["curr_hash"] = chain[i].get_curr_hash();
+        blockJSon["chain"][i]["nonce"] = chain[i].get_nonce();
+        blockJSon["chain"][i]["diff"] = chain[i].get_diff();
+        return true;
+    }
     bool mine(int i = -1) {
         if (i < 1) {
             i = chain.size() - 1;
@@ -142,12 +153,24 @@ int main()
     // cin.tie(nullptr);
     // cout.tie(nullptr);
     Blockchain chainLeader;
-    fstream blockFile("blocks.json");
-    if (blockFile.is_open() == false) {
+    ifstream blockFileI("blocks.json");
+    json blockJSon;
+    try {
+        blockFileI >> blockJSon;
+    }
+    catch (json::parse_error&) {
+        blockJSon = json::object();
+        blockJSon["chain"] = json::array();
         system("touch blocks.json");
     }
-    chainLeader.createGenesisBlock();
-    // json blockJSon = json::parse(blockFile);
+    
+    for (int i = 0; i < blockJSon["chain"].size(); ++i) {
+        chainLeader.newBlock(blockJSon["chain"][i]["data"], blockJSon["chain"][i]["time"], blockJSon["chain"][i]["prev_hash"], blockJSon["chain"][i]["curr_hash"], blockJSon["chain"][i]["nonce"], blockJSon["chain"][i]["diff"]);
+    }
+    if (blockJSon["chain"].size() <= 0) {
+        chainLeader.createGenesisBlock();
+        chainLeader.addblocktojson(blockJSon);
+    }
     string inp;
     while (inp != "out") {
         cout << "comm&>> ";
@@ -157,7 +180,7 @@ int main()
             string data;
             cin >> data;
             cout << "\n";
-            chainLeader.newBlock("", data, time(nullptr), 0);
+            chainLeader.newBlock(data);
         }
         if (inp == "ls") chainLeader.coutAll();
         if (inp == "mine") {
@@ -166,12 +189,15 @@ int main()
             cin >> i;
             cout << '\n';
             chainLeader.mine(i);
+            chainLeader.addblocktojson(blockJSon, i);
         }
         if (inp == "valida") {
             if (chainLeader.validatchain()) cout << "Chain is valid..." << '\n';
             else cout << "Chain is invalid!" << '\n';
         }
     }
+    ofstream blockFileO("blocks.json");
+    blockFileO << setw(4) << blockJSon;
     
     return 0;
 }
